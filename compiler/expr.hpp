@@ -1,7 +1,7 @@
 #ifndef EXPR_HPP
 #define EXPR_HPP
 
-#include "TYPE.hpp"
+#include "type.hpp"
 
 #include <exception>
 #include <stdexcept>
