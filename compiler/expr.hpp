@@ -26,6 +26,11 @@ struct Expr {
     static std::string OverflowIntError("Integer overflow.");
     return OverflowIntError; // Defines static string message for an integer overflow
   }
+
+  const std::string& GetUndefBehavError() {
+    static std::string UndefBehavError("Undefined behavior.");
+    return UndefBehavError; // Defines static string message for undefined behavior
+  }
   
   virtual ~Expr() = default; // virtual destructor
   virtual int Weight() = 0; // Weight of expression + Weight of branch expressions
@@ -400,7 +405,7 @@ public:
     // dividing the minimum value of int by -1 will overflow
     if (_e2 == 0 || _e2 == std::numeric_limits<int>::min() ||
 	(_e1 == std::numeric_limits<int>::min() && _e2 == -1))
-      throw std::runtime_error(GetOverflowIntError());
+      throw std::runtime_error(GetUndefBehavError());
     
     return _e1 / _e2;
   }
@@ -428,7 +433,7 @@ public:
     // dividing the minimum value of int by -1 will overflow
     if (_e2 == 0 || _e2 == std::numeric_limits<int>::min() ||
 	(_e1 == std::numeric_limits<int>::min() && _e2 == -1))
-      throw std::runtime_error(GetOverflowIntError());
+      throw std::runtime_error(GetUndefBehavError());
     
     return _e1 % _e2;
   }
