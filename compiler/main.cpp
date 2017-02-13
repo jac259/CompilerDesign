@@ -3,7 +3,8 @@
 int main() {
 
   std::cout << std::endl;
-  
+
+  // Test logical expressions
   Expr * trueExpr = new Bool_Expr(true);
   Expr * falseExpr = new Bool_Expr(false);
 
@@ -30,7 +31,8 @@ int main() {
   std::cout << "NOT EQUAL: T != F = " << neqExpr->Eval() << std::endl;
 
   std::cout << "-------------------------------" << std::endl;
-  
+
+  // Test comparison expressions
   Expr * zero = new Int_Expr(0);
   Expr * one = new Int_Expr(1);
   Expr * two = new Int_Expr(2);
@@ -53,7 +55,8 @@ int main() {
   std::cout << "GREATER THAN EQUAL: 4 >= 4 = " << gteExpr->Eval() << std::endl;
 
   std::cout << "-------------------------------" << std::endl;
-  
+
+  // Test math expressions
   Expr * addExpr = new Add_Expr(two, new Add_Expr(six, seven));
   Expr * subExpr = new Sub_Expr(nine, new Sub_Expr(one, two));
   Expr * multExpr = new Mult_Expr(four, new Mult_Expr(eight, two));
@@ -73,6 +76,7 @@ int main() {
 
   std::cout << "-------------------------------" << std::endl;
 
+  // Test well-typedness check 
   try {
     Expr * illFormExpr = new And_Expr(trueExpr, zero);
     bool illForm = illFormExpr->Eval();
@@ -99,6 +103,7 @@ int main() {
   
   std::cout << "-------------------------------" << std::endl;
 
+  // Test overflow check
   Expr * maxInt = new Int_Expr(std::numeric_limits<int>::max());
   Expr * minInt = new Int_Expr(std::numeric_limits<int>::min());
   
