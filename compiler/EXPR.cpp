@@ -61,7 +61,7 @@ int main() {
   Expr * remExpr = new Rem_Expr(nine, two);
   Expr * negExpr = new Neg_Expr(new Add_Expr(nine, two));
   Expr * divRemExpr = new Add_Expr(new Mult_Expr(new Div_Expr(nine, five), five),
-				   new Rem_Expr(nine, five))
+				   new Rem_Expr(nine, five));
 
   std::cout << "ADD: 2 + 6 + 7 = " << addExpr->Eval() << std::endl;
   std::cout << "SUB: 9 - (1 - 2) = " << subExpr->Eval() << std::endl;
