@@ -15,7 +15,7 @@ Compiler
    * ./build < inputfile.txt
    * ./build < inputfile.txt > outputfile.txt
    * ./build -* < inputfile.txt > outputfile.txt
-     * replace * with
-       * h for hexadecimal output
-       * b for binary output
-       * d for decimal output (optional, this is the default)
+     * where * is replaced with
+       * h for hexadecimal output,
+       * b for binary output, or
+       * d for decimal output (optional, this is the default).
