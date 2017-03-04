@@ -44,7 +44,7 @@ private:
   bool value;
 
 public:
-  Bool_Expr(bool _value) : value(_value) { ExprType = &Bool_; }; // initialize value & type
+  Bool_Expr(bool _value) : value(_value) { ExprType = &Bool_; } // initialize value & type
 
   int Weight() { return 1; }
   int Eval() { return value; } // returns value as int
@@ -56,7 +56,7 @@ private:
   int value;
 
 public:
-  Int_Expr(int _value) : value(_value) { ExprType = &Int_; }; // initialize value & type
+  Int_Expr(int _value) : value(_value) { ExprType = &Int_; } // initialize value & type
 
   int Weight() { return 1; }
   int Eval() { return value; }
@@ -73,10 +73,10 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
   
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
-  int Eval() { return e1->Eval() & e2->Eval(); }
+  int Eval() { return e1->Eval() ?  e2->Eval() : false; }
 };
 
 struct Or_Expr : Expr {
@@ -90,10 +90,10 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
-  int Eval() { return e1->Eval() | e2->Eval(); } 
+  int Eval() { return e1->Eval() ? true : e2->Eval(); } 
 };
 
 struct Xor_Expr : Expr {
@@ -107,7 +107,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() != e2->Eval(); }
@@ -124,44 +124,75 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize arg and confirm it is well-typed
+  } // initialize arg and confirm it is well-typed
 
   int Weight() { return 1 + e->Weight(); }
   int Eval() { return !(e->Eval()); }
 };
 
-struct And_Then_Expr : Expr {
-  // if e1 then e2 else false (short-circuit AND)
+struct Bit_And_Expr : Expr {
+  // e1 & e2 (bitwise AND)
 private:
   Expr * e1, * e2;
 
 public:
-  And_Then_Expr(Expr * _e1, Expr *_e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Bool_) && (e2->Check() == &Bool_))
-      ExprType = &Bool_; // Expression type of bool
+  Bit_And_Expr(Expr * _e1, Expr *_e2) : e1(_e1), e2(_e2) {
+    if(e1->Check() == e2->Check())
+      ExprType = e1->Check(); // Expression type matching that of e1 & e2
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
-  int Eval() { return e1->Eval() ? e2->Eval() : false; }
+  int Eval() { return e1->Eval() & e2->Eval(); }
 };
 
-struct Or_Else_Expr : Expr {
-  // if e1 then true else e2 (short-circuit OR)
+struct Bit_Or_Expr : Expr {
+  // e1 | e2 (bitwise OR)
 private:
   Expr * e1, * e2;
 
 public:
-  Or_Else_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Bool_) && (e2->Check() == &Bool_))
-      ExprType = &Bool_; // Expression type of bool
+  Bit_Or_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
+    if(e1->Check() == e2->Check())
+      ExprType = e1->Check(); // Expression type matching that of e1 & e2
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
-  int Eval() { return e1->Eval() ? true : e2->Eval(); }
+  int Eval() { return e1->Eval() | e2->Eval(); }
+};
+
+struct Bit_Xor_Expr : Expr {
+  // e1 ^ e2 (bitwise XOR)
+private:
+  Expr * e1, * e2;
+
+public:
+  Bit_Xor_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
+    if(e1->Check() == e2->Check())
+      ExprType = e1->Check(); // Expression type matching that of e1 & e2
+    else
+      throw std::runtime_error(GetTypeError());
+  } // initialize args and confirm they are well-typed
+  
+  int Weight() { return 1 + e1->Weight() + e2->Weight(); }
+  int Eval() { return e1->Eval() ^ e2->Eval(); }
+};
+
+struct Bit_Comp_Expr : Expr {
+  // ~e (bitwise NOT)
+private:
+  Expr * e;
+
+public:
+  Bit_Comp_Expr(Expr * _e) : e(_e) {
+    ExprType = e->Check(); // Expression type matching that of e
+  }
+
+  int Weight() { return 1 + e->Weight(); }
+  int Eval() { return ExprType == &Bool_ ? (e->Eval() ? 0 : 1) : ~(e->Eval()); }
 };
 
 struct Cond_Expr : Expr {
@@ -175,7 +206,7 @@ public:
       ExprType = e2->Check(); // Expression type matching that of e2 & e3
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight() + e3->Weight(); }
   int Eval() { return e1->Eval() ? e2->Eval() : e3->Eval(); }
@@ -192,7 +223,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() == e2->Eval(); }
@@ -209,7 +240,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() != e2->Eval(); }
@@ -226,7 +257,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() < e2->Eval(); }
@@ -243,7 +274,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() > e2->Eval(); }
@@ -260,7 +291,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() <= e2->Eval(); }
@@ -277,7 +308,7 @@ public:
       ExprType = &Bool_; // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() >= e2->Eval(); }
@@ -294,7 +325,7 @@ public:
       ExprType = &Int_; // Expression type of int
     else
       throw std::runtime_error(GetTypeError());    
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() {
@@ -324,7 +355,7 @@ public:
       ExprType = &Int_; // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() {
@@ -354,7 +385,7 @@ public:
       ExprType = &Int_;
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() {
@@ -394,7 +425,7 @@ public:
       ExprType = &Int_; // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() {
@@ -422,7 +453,7 @@ public:
       ExprType = &Int_; // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize args and confirm they are well-typed
+  } // initialize args and confirm they are well-typed
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() {
@@ -450,7 +481,7 @@ public:
       ExprType = &Int_; // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
-  }; // initialize arg and confirm it is well-typed
+  } // initialize arg and confirm it is well-typed
 
   int Weight() { return 1 + e->Weight(); }
   int Eval() {

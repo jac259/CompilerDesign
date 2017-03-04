@@ -1,0 +1,8 @@
+#   <- this denotes a comment.
+
++-*/%
+&|&&||^~
+! = == !=
+< > <= >= ? : ()
+123456789 0xfB20 0b1010101
+true false
