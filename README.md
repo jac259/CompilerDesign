@@ -2,7 +2,7 @@
 
 Compiler
 ----------------------------------
- * This program is a compiler for Dr. Sutton's Compiler Design course.
+ * This program is an in-progress compiler for Dr. Sutton's Compiler Design course.
  * Currently this program can
    * create abstract syntax trees containing expressions of integer and boolean types,
    * perform lexical analysis on a text file and build tokens based on the characters in the text,
