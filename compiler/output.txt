@@ -1,0 +1,21 @@
+Input: #   <- this denotes a comment.
+Output: 
+
+Input: +-*/%
+Output: Plus_Tok, Minus_Tok, Star_Tok, Slash_Tok, Percent_Tok
+
+Input: &|&&||^~
+Output: Amp_Tok, Pipe_Tok, AmpAmp_Tok, PipePipe_Tok, Caret_Tok, Tilde_Tok
+
+Input: ! = == !=
+Output: Bang_Tok, Equal_Tok, EqualEqual_Tok, Not_Equal_Tok
+
+Input: < > <= >= ? : ()
+Output: LT_Tok, GT_Tok, LTE_Tok, GTE_Tok, Query_Tok, Colon_Tok, LParen_Tok, RParen_Tok
+
+Input: 123456789 0xfB20 0b1010101
+Output: Int_Tok: 123456789, Int_Tok: 64288, Int_Tok: 85
+
+Input: true false
+Output: Bool_Tok: true, Bool_Tok: false
+

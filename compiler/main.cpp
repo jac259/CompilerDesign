@@ -1,5 +1,4 @@
-#include "expr.hpp"
-#include "lexer.hpp"
+#include "parser.hpp"
 
 #include <stdio.h>
 #include <sstream>
@@ -13,6 +12,7 @@ int main(int argc, char * argv[]) {
   std::string str;
   std::stringstream output;
 
+  // Input parameters
   if(argv[1])
     if((std::string)argv[1] == "-b")
       outputType = 'b';
@@ -21,26 +21,25 @@ int main(int argc, char * argv[]) {
     else if((std::string)argv[1] != "-d")
       throw std::runtime_error("Invalid argument.");
 
+  outputInt = outputType;
+
   while (std::getline(std::cin, str)) {
     Lexer * lexer = new Lexer(str, outputType);
+    Parser * parser;
+    std::vector<Token*> * tokens = new std::vector<Token*>();
 
-    if(str.empty())
+    if(str.empty() || lexer->Eof()) // empty or fully-commented line
       continue;
     
-    std::cout << "Input: " << str << "\n";
-    output << "Output: ";
+    while(!lexer->Eof())
+      tokens->push_back(lexer->Next());
+
+    parser = new Parser(*tokens);
+    parser->Print();
     
-    while(!lexer->Eof()) {
-      output << lexer->Print(lexer->Next());
-      if(!lexer->Eof())
-	output << ", ";
-    }
-
-    std::cout << output.str() << "\n\n";
     delete lexer;
-
-    output.str(std::string());
+    delete parser;
   }
 
-  return 1;
+  return 0;
 }
