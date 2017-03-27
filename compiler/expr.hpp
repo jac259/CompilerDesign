@@ -123,6 +123,7 @@ public:
   }
 };
 
+/*
 struct Xor_Expr : Expr {
   // e1 XOR e2
 private:
@@ -143,7 +144,7 @@ public:
       + " ^^ " +
       (e2->Weight() == 1 ? e2->Print() : ("(" + e2->Print() + ")"));
   }
-};
+};*/
 
 struct Not_Expr : Expr {
   // !e
@@ -200,11 +201,11 @@ public:
 
   int Weight() { return 1 + e1->Weight() + e2->Weight(); }
   int Eval() { return e1->Eval() | e2->Eval(); }
-    std::string Print() {
-      return (e1->Weight() == 1 ? e1->Print() : ("(" + e1->Print() + ")"))
-	+ " | " +
-	(e2->Weight() == 1 ? e2->Print() : ("(" + e2->Print() + ")"));
-    }
+  std::string Print() {
+    return (e1->Weight() == 1 ? e1->Print() : ("(" + e1->Print() + ")"))
+      + " | " +
+      (e2->Weight() == 1 ? e2->Print() : ("(" + e2->Print() + ")"));
+  }
 };
 
 struct Bit_Xor_Expr : Expr {

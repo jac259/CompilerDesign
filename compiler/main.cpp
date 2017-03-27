@@ -24,21 +24,32 @@ int main(int argc, char * argv[]) {
   outputInt = outputType;
 
   while (std::getline(std::cin, str)) {
-    Lexer * lexer = new Lexer(str, outputType);
-    Parser * parser;
-    std::vector<Token*> * tokens = new std::vector<Token*>();
+    try {
+      // skip empty & fully commented lines
+      if(str.empty() || str.front() == '#')
+	continue;
 
-    if(str.empty() || lexer->Eof()) // empty or fully-commented line
-      continue;
-    
-    while(!lexer->Eof())
-      tokens->push_back(lexer->Next());
+      // trim off comments
+      size_t comment = str.find_first_of('#');
+      if(comment != std::string::npos)
+	str.erase(comment); 
 
-    parser = new Parser(*tokens);
-    parser->Print();
-    
-    delete lexer;
-    delete parser;
+      
+      Lexer * lexer = new Lexer(str, outputType);
+      std::vector<Token*> * tokens = new std::vector<Token*>();
+      
+      // lex tokens
+      while(!lexer->Eof())
+	tokens->push_back(lexer->Next());
+
+      // parse tokens
+      Parser * parser = new Parser(*tokens);
+      parser->Print();
+    }
+    catch (std::runtime_error ex) {
+      std::cout << "Input: " << str << "\n"
+		<< "Error: " << ex.what() << "\n\n";
+    }
   }
 
   return 0;

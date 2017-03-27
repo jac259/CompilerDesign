@@ -1,11 +1,13 @@
 #   <- this denotes a comment.
 
-#+-*/%
+
 #&|&&||^~
 #! = == !=
 #< > <= >= ? : ()
-#true false
 
++-*/%  # invalid statement
+true || false
 10-123456789
+true < false
 0xfB20
 0b1010101

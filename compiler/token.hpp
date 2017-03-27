@@ -17,7 +17,6 @@ enum Token_Kind {
   AmpAmp_Tok,      //  &&
   PipePipe_Tok,    //  ||
   Caret_Tok,       //  ^
-  CaretCaret_Tok,  //  ^^
   Tilde_Tok,       //  ~
   Bang_Tok,        //  !
   Equal_Tok,       //  =
@@ -36,7 +35,7 @@ enum Token_Kind {
 };
 
 // Used for printing -- this array needs to match the enum above
-std::string Token_Names[27] = {
+std::string Token_Names[26] = {
   "Eof_Tok",
   "Plus_Tok",
   "Minus_Tok",
@@ -48,7 +47,6 @@ std::string Token_Names[27] = {
   "AmpAmp_Tok",
   "PipePipe_Tok",
   "Caret_Tok",
-  "CaretCaret_Tok",
   "Tilde_Tok",
   "Bang_Tok",
   "Equal_Tok",
@@ -91,7 +89,6 @@ struct Punc_Op_Token : Token {
     case AmpAmp_Tok: symbol = "&&"; break;
     case PipePipe_Tok: symbol = "||"; break;
     case Caret_Tok: symbol = "^"; break;
-    case CaretCaret_Tok: symbol = "^^"; break;
     case Tilde_Tok: symbol = "~"; break;
     case Bang_Tok: symbol = "!"; break;
     case Equal_Tok: symbol = "="; break;

@@ -26,9 +26,11 @@ private:
   // Parse functions
   Expr * ParseExpr();
   Expr * ParseCond();
-  Expr * ParseXor();
   Expr * ParseOr();
   Expr * ParseAnd();
+  Expr * ParseBitXor();
+  Expr * ParseBitOr();
+  Expr * ParseBitAnd();
   Expr * ParseEqual();
   Expr * ParseOrdering();
   Expr * ParseAdd();
@@ -47,11 +49,7 @@ public:
 void Parser::Print() {
   Expr * e = Parse();
   std::cout << "Input: " << e->Print() << "\n"
-	    << "Result: "
-	    << e->Evaluate()
-	    << "\n\n";
-
-  //(e->Check() == &Bool_ ? (e->Eval() ? "true" : "false") : e->Evaluate())
+	    << "Result: " << e->Evaluate() << "\n\n";
 }
 
 Token * Parser::ConsumeThis() {
@@ -65,7 +63,6 @@ Token * Parser::Match(Token_Kind k) {
     return ConsumeThis();
   else
     return nullptr;
-    //throw std::runtime_error(GetSyntaxError());
 }
 
 Expr * Parser::ParseExpr() {
@@ -73,7 +70,7 @@ Expr * Parser::ParseExpr() {
 }
 
 Expr * Parser::ParseCond() {
-  Expr * e = ParseXor();
+  Expr * e = ParseOr();
   while(true) {
     if(Match_If(Query_Tok)) {
       Consume();
@@ -90,22 +87,6 @@ Expr * Parser::ParseCond() {
   }
 }
 
-Expr * Parser::ParseXor() {
-  Expr * e = ParseOr();
-  while(true) {
-    if(Match_If(CaretCaret_Tok)) {
-      Consume();
-      e = new Xor_Expr(e, ParseOr());
-    }
-    else if(Match_If(Caret_Tok)) {
-      Consume();
-      e = new Bit_Xor_Expr(e, ParseOr());
-    }
-    else
-      return e;
-  }
-}
-
 Expr * Parser::ParseOr() {
   Expr * e = ParseAnd();
   while(true) {
@@ -113,23 +94,51 @@ Expr * Parser::ParseOr() {
       Consume();
       e = new Or_Expr(e, ParseAnd());
     }
-    else if(Match_If(Pipe_Tok)) {
-      Consume();
-      e = new Bit_Or_Expr(e, ParseAnd());
-    }
     else
       return e;
   }
 }
 
 Expr * Parser::ParseAnd() {
-  Expr * e = ParseEqual();
+  Expr * e = ParseBitOr();
   while(true) {
     if(Match_If(AmpAmp_Tok)) {
       Consume();
-      e = new And_Expr(e, ParseEqual());
+      e = new And_Expr(e, ParseBitOr());
     }
-    else if(Match_If(Amp_Tok)) {
+    else
+      return e;
+  }
+}
+
+Expr * Parser::ParseBitOr() {
+  Expr * e = ParseBitXor();
+  while(true) {
+    if(Match_If(Pipe_Tok)) {
+      Consume();
+      e = new Bit_Or_Expr(e, ParseBitXor());
+    }
+    else
+      return e;
+  }
+}
+
+Expr * Parser::ParseBitXor() {
+  Expr * e = ParseBitAnd();
+  while(true) {
+    if(Match_If(Caret_Tok)) {
+      Consume();
+      e = new Bit_Xor_Expr(e, ParseBitAnd());
+    }
+    else
+      return e;
+  }
+}
+
+Expr * Parser::ParseBitAnd() {
+  Expr * e = ParseEqual();
+  while(true) {
+    if(Match_If(Amp_Tok)) {
       Consume();
       e = new Bit_And_Expr(e, ParseEqual());
     }
@@ -229,31 +238,6 @@ Expr * Parser::ParseUnary() {
   }
   else
     return ParsePrimary();
-
-  // Expr * u;
-  // if(Match_If(Bang_Tok)) {
-  //   Consume();
-  //   u = new Not_Expr(ParsePrimary());
-  // }
-  // else if(Match_If(Minus_Tok)) {
-  //   Consume();
-  //   u = new Neg_Expr(ParsePrimary());
-  // }
-  // else
-  //   return ParsePrimary();
-
-  // while(true) {
-  //   if(Match_If(Bang_Tok)) {
-  //     Consume();
-  //     u = new Not_Expr(ParsePrimary());
-  //   }
-  //   else if(Match_If(Minus_Tok)) {
-  //     Consume();
-  //     u = new Neg_Expr(ParsePrimary());
-  //   }
-  //   else
-  //     return u;
-  // }
 }
 
 Expr * Parser::ParsePrimary() {
@@ -278,61 +262,7 @@ Expr * Parser::ParsePrimary() {
       throw std::runtime_error(GetSyntaxError());
   }
   else
-    throw std::runtime_error("Bottomed out.");
-    //return ParseExpr();
+    throw std::runtime_error("Invalid statement. Could not parse.");
 }
-
-// struct Token {
-//   int kind; // this value defines the kind of Token in the enum
-//   virtual ~Token() = default;
-//   std::string EnumName() { return Token_Names[kind]; }
-// };
-
-// struct Punc_Op_Token : Token {
-//   // creates a non-literal token of the passed kind
-//   Punc_Op_Token(int tok) { kind = tok; };
-// };
-
-// struct Bool_Token : Token {
-//   // creates a boolean token with passed value
-//   bool value;
-//   Bool_Token(bool b) : value(b) { kind = Bool_Tok; };
-// };
-
-// struct Int_Token : Token {
-//   // creates an integer token with passed value
-//   int value;
-//   Int_Token(int i) : value(i) { kind = Int_Tok; };
-// };
-
-// enum Token_Kind {
-//   Eof_Tok,         //  End of file, 0, null
-//   Plus_Tok,        //  +
-//   Minus_Tok,       //  -
-//   Star_Tok,        //  *
-//   Slash_Tok,       //  /
-//   Percent_Tok,     //  %
-//   Amp_Tok,         //  &
-//   Pipe_Tok,        //  |
-//   AmpAmp_Tok,      //  &&
-//   PipePipe_Tok,    //  ||
-//   Caret_Tok,       //  ^
-//   Tilde_Tok,       //  ~
-//   Bang_Tok,        //  !
-//   Equal_Tok,       //  =
-//   EqualEqual_Tok,  //  ==
-//   Not_Equal_Tok,   //  !=
-//   LT_Tok,          //  <
-//   GT_Tok,          //  >
-//   LTE_Tok,         //  <=
-//   GTE_Tok,         //  >=
-//   Query_Tok,       //  ?
-//   Colon_Tok,       //  :
-//   LParen_Tok,      //  (
-//   RParen_Tok,      //  )
-//   Bool_Tok,        //  true/false
-//   Int_Tok          //  integers
-// };
-
 
 #endif

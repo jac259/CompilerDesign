@@ -34,11 +34,6 @@ public:
 
 // Constructor, stores input, sets iterators and output format for numbers
 Lexer::Lexer(std::string _str, char _outputFormat) : str(_str), outputFormat(_outputFormat) {
-  size_t comment = str.find_first_of('#');
-    
-  if(comment != std::string::npos)
-    str.erase(comment); // cut off comments
-  
   first = str.begin();
   last = str.end();
 }
@@ -186,10 +181,10 @@ Token * Lexer::Next() {
       return new Punc_Op_Token(Pipe_Tok); // |
     case '^':
       Consume();
-      if(LookAhead() == '^') {
-	Consume();
-	return new Punc_Op_Token(CaretCaret_Tok); // ^^
-      }
+      // if(LookAhead() == '^') {
+      // 	Consume();
+      // 	return new Punc_Op_Token(CaretCaret_Tok); // ^^
+      // }
       return new Punc_Op_Token(Caret_Tok); // ^
     case '~':
       Consume();
