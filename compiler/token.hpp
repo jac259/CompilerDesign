@@ -155,11 +155,6 @@ struct Id_Token : Token {
 // List of keywords in the system
 struct Keyword_Table : std::unordered_map<std::string, Token_Kind> {
   Keyword_Table() {
-    // insert({"true", True_KW});
-    // insert({"false", False_KW});
-    // insert({"var", Var_KW});
-    // insert({"int", Int_KW});
-    // insert({"bool", Bool_KW});
     insert({{"true", True_KW},
 	    {"false", False_KW},
 	    {"var", Var_KW},
