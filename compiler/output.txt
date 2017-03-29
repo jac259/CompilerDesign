@@ -1,21 +1,21 @@
-Input: #   <- this denotes a comment.
-Output: 
+Input: +-*/%  
+Error: Invalid statement. Could not parse.
 
-Input: +-*/%
-Output: Plus_Tok, Minus_Tok, Star_Tok, Slash_Tok, Percent_Tok
+Input: true < false
+Error: Invalid expression type.
 
-Input: &|&&||^~
-Output: Amp_Tok, Pipe_Tok, AmpAmp_Tok, PipePipe_Tok, Caret_Tok, Tilde_Tok
+Input: (true || false) ? (5 < 2) : (~true)
+Result: false
 
-Input: ! = == !=
-Output: Bang_Tok, Equal_Tok, EqualEqual_Tok, Not_Equal_Tok
+Input: 10 - 123456789
+Result: -123456779
 
-Input: < > <= >= ? : ()
-Output: LT_Tok, GT_Tok, LTE_Tok, GTE_Tok, Query_Tok, Colon_Tok, LParen_Tok, RParen_Tok
+Input: x = 121
+Result: x = 121
 
-Input: 123456789 0xfB20 0b1010101
-Output: Int_Tok: 123456789, Int_Tok: 64288, Int_Tok: 85
+Input: y = 64288 + 9
+Result: y = 64297
 
-Input: true false
-Output: Bool_Tok: true, Bool_Tok: false
+Input: b = (121 < 64297) ? ((10 / 121) < 5) : ((64297 * 64297) < 1)
+Result: b = true
 

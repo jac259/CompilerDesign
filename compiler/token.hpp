@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 enum Token_Kind {
   Eof_Tok,         //  End of file, 0, null
@@ -28,14 +29,21 @@ enum Token_Kind {
   GTE_Tok,         //  >=
   Query_Tok,       //  ?
   Colon_Tok,       //  :
+  Semicolon_Tok,   //  ;
   LParen_Tok,      //  (
   RParen_Tok,      //  )
-  Bool_Tok,        //  true/false
-  Int_Tok          //  integers
+  Bool_Tok,        //  boolean
+  Int_Tok,         //  integers
+  Id_Tok,          //  identifier
+  True_KW,         //  true value
+  False_KW,        //  false value
+  Var_KW,          //  var declaration
+  Int_KW,          //  int var type
+  Bool_KW          //  bool var type
 };
 
 // Used for printing -- this array needs to match the enum above
-std::string Token_Names[26] = {
+std::string Token_Names[33] = {
   "Eof_Tok",
   "Plus_Tok",
   "Minus_Tok",
@@ -58,10 +66,17 @@ std::string Token_Names[26] = {
   "GTE_Tok",
   "Query_Tok",
   "Colon_Tok",
+  "Semicolon_Tok",
   "LParen_Tok",
   "RParen_Tok",
   "Bool_Tok",
-  "Int_Tok"
+  "Int_Tok",
+  "Id_Tok",
+  "True_KW",
+  "False_KW",
+  "Var_KW",
+  "Int_KW",
+  "Bool_KW"
 };
 
 struct Token {
@@ -99,6 +114,7 @@ struct Punc_Op_Token : Token {
     case GTE_Tok: symbol = ">="; break;
     case Query_Tok: symbol = "?"; break;
     case Colon_Tok: symbol = ":"; break;
+    case Semicolon_Tok: symbol = ";"; break;
     case LParen_Tok: symbol = "("; break;
     case RParen_Tok: symbol = ")"; break;
     }
@@ -111,7 +127,7 @@ struct Bool_Token : Token {
   Bool_Token(bool b) : value(b) {
     kind = Bool_Tok;
     symbol = value ? "true" : "false";
-  };
+  }
 };
 
 struct Int_Token : Token {
@@ -120,7 +136,36 @@ struct Int_Token : Token {
   Int_Token(int i) : value(i) {
     kind = Int_Tok;
     symbol = std::to_string(value);
-  };
+  }
+};
+
+struct Id_Token : Token {
+  // creates an identifier token
+  const std::string name;
+  Id_Token(const std::string n) : name(n) { // constructor for generic identifier
+    kind = Id_Tok;
+    symbol = name;
+  }
+  Id_Token(const std::string n, Token_Kind k) : name(n) { // constructor for keyword identifier
+    kind = k;
+    symbol = name;
+  }
+};
+
+// List of keywords in the system
+struct Keyword_Table : std::unordered_map<std::string, Token_Kind> {
+  Keyword_Table() {
+    // insert({"true", True_KW});
+    // insert({"false", False_KW});
+    // insert({"var", Var_KW});
+    // insert({"int", Int_KW});
+    // insert({"bool", Bool_KW});
+    insert({{"true", True_KW},
+	    {"false", False_KW},
+	    {"var", Var_KW},
+	    {"int", Int_KW},
+	    {"bool", Bool_KW}});
+  }
 };
 
 #endif

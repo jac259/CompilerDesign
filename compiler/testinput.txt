@@ -1,13 +1,9 @@
 #   <- this denotes a comment.
 
-
-#&|&&||^~
-#! = == !=
-#< > <= >= ? : ()
-
 +-*/%  # invalid statement
-true || false
-10-123456789
 true < false
-0xfB20
-0b1010101
+(true || false) ? 5 < 2 : ~true
+10-123456789
+var int x = 121
+var int y = 0xfB20 + 0b1001
+var bool b = x < y ? 10 / x < 5 : y * y < 1

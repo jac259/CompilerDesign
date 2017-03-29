@@ -2,6 +2,7 @@
 #define EXPR_HPP
 
 #include "type.hpp"
+#include "context.hpp"
 
 #include <exception>
 #include <stdexcept>
@@ -12,15 +13,16 @@
 #include <algorithm>
 
 // Global - defining constant type objects to use for comparison and checks
-const Bool_Type Bool_;
-const Int_Type Int_;
-char outputInt;
+// const Bool_Type Bool_;
+// const Int_Type Int_;
+// char outputInt;
 
-std::string FormatInt(int value);
+struct Context;
 
 struct Expr {
   const Type* ExprType; // Type ptr used in derived expressions; will point to a global type object
-
+  Context* cxt;
+  
   const std::string& GetTypeError() {
     static std::string TypeError("Invalid expression type.");
     return TypeError; // Defines static string message for a type error
@@ -42,13 +44,15 @@ struct Expr {
   virtual std::string Print() = 0;
   const Type* Check() { return ExprType; } // Returns expression type
   std::string Evaluate() {
-    if(Check() == &Bool_)
+    if(Check() == &(cxt->Bool_))
       return Eval() ? "true" : "false";
-    else if(Check() == &Int_)
+    else if(Check() == &(cxt->Int_))
       return FormatInt(Eval());
     else
       throw std::runtime_error(GetUndefBehavError());
   }
+  Expr* Precompute();
+  std::string FormatInt(int value);
 };
 
 struct Bool_Expr : Expr {
@@ -57,7 +61,10 @@ private:
   bool value;
 
 public:
-  Bool_Expr(bool _value) : value(_value) { ExprType = &Bool_; } // initialize value & type
+  Bool_Expr(bool _value, Context* _cxt) : value(_value) {
+    cxt = _cxt;
+    ExprType = &(cxt->Bool_);
+  } // initialize value & type
 
   int Weight() { return 1; }
   int Eval() { return value; } // returns value as int
@@ -70,7 +77,10 @@ private:
   int value;
 
 public:
-  Int_Expr(int _value) : value(_value) { ExprType = &Int_; } // initialize value & type
+  Int_Expr(int _value, Context* _cxt) : value(_value) {
+    cxt = _cxt;
+    ExprType = &(cxt->Int_);
+  } // initialize value & type
 
   int Weight() { return 1; }
   int Eval() { return value; }
@@ -85,9 +95,10 @@ private:
   Expr * e1, * e2;
   
 public:
-  And_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
-    if ((e1->Check() == &Bool_) && (e2->Check() == &Bool_))
-      ExprType = &Bool_; // Expression type of bool
+  And_Expr(Expr * _e1, Expr * _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if ((e1->Check() == &(cxt->Bool_)) && (e2->Check() == &(cxt->Bool_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -107,9 +118,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Or_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
-    if ((e1->Check() == &Bool_) && (e2->Check() == &Bool_))
-      ExprType = &Bool_; // Expression type of bool
+  Or_Expr(Expr * _e1, Expr * _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if ((e1->Check() == &(cxt->Bool_)) && (e2->Check() == &(cxt->Bool_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -123,28 +135,6 @@ public:
   }
 };
 
-/*
-struct Xor_Expr : Expr {
-  // e1 XOR e2
-private:
-  Expr * e1, * e2;
-
-public:
-  Xor_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
-    if ((e1->Check() == &Bool_) && (e2->Check() == &Bool_))
-      ExprType = &Bool_; // Expression type of bool
-    else
-      throw std::runtime_error(GetTypeError());
-  } // initialize args and confirm they are well-typed
-
-  int Weight() { return 1 + e1->Weight() + e2->Weight(); }
-  int Eval() { return e1->Eval() != e2->Eval(); }
-  std::string Print() {
-    return (e1->Weight() == 1 ? e1->Print() : ("(" + e1->Print() + ")"))
-      + " ^^ " +
-      (e2->Weight() == 1 ? e2->Print() : ("(" + e2->Print() + ")"));
-  }
-};*/
 
 struct Not_Expr : Expr {
   // !e
@@ -152,9 +142,10 @@ private:
   Expr * e;
 
 public:
-  Not_Expr(Expr * _e) : e(_e) {
-    if(e->Check() == &Bool_)
-      ExprType = &Bool_; // Expression type of bool
+  Not_Expr(Expr * _e, Context* _cxt) : e(_e) {
+    cxt = _cxt;
+    if(e->Check() == &(cxt->Bool_))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize arg and confirm it is well-typed
@@ -170,7 +161,8 @@ private:
   Expr * e1, * e2;
 
 public:
-  Bit_And_Expr(Expr * _e1, Expr *_e2) : e1(_e1), e2(_e2) {
+  Bit_And_Expr(Expr * _e1, Expr *_e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
     if(e1->Check() == e2->Check())
       ExprType = e1->Check(); // Expression type matching that of e1 & e2
     else
@@ -192,7 +184,8 @@ private:
   Expr * e1, * e2;
 
 public:
-  Bit_Or_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
+  Bit_Or_Expr(Expr * _e1, Expr * _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
     if(e1->Check() == e2->Check())
       ExprType = e1->Check(); // Expression type matching that of e1 & e2
     else
@@ -214,7 +207,8 @@ private:
   Expr * e1, * e2;
 
 public:
-  Bit_Xor_Expr(Expr * _e1, Expr * _e2) : e1(_e1), e2(_e2) {
+  Bit_Xor_Expr(Expr * _e1, Expr * _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
     if(e1->Check() == e2->Check())
       ExprType = e1->Check(); // Expression type matching that of e1 & e2
     else
@@ -236,12 +230,13 @@ private:
   Expr * e;
 
 public:
-  Bit_Comp_Expr(Expr * _e) : e(_e) {
+  Bit_Comp_Expr(Expr * _e, Context* _cxt) : e(_e) {
+    cxt = _cxt;
     ExprType = e->Check(); // Expression type matching that of e
   }
 
   int Weight() { return 1 + e->Weight(); }
-  int Eval() { return ExprType == &Bool_ ? (e->Eval() ? 0 : 1) : ~(e->Eval()); }
+  int Eval() { return ExprType == &(cxt->Bool_) ? (e->Eval() ? 0 : 1) : ~(e->Eval()); }
   std::string Print() { return "~" + (e->Weight() == 1 ? e->Print() : ("(" + e->Print() + ")")); }
 };
 
@@ -251,8 +246,9 @@ private:
   Expr * e1, * e2, * e3;
 
 public:
-  Cond_Expr(Expr * _e1, Expr * _e2, Expr * _e3) : e1(_e1), e2(_e2), e3(_e3) {
-    if((e1->Check() == &Bool_) && (e2->Check() == e3->Check()))
+  Cond_Expr(Expr * _e1, Expr * _e2, Expr * _e3, Context* _cxt) : e1(_e1), e2(_e2), e3(_e3) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Bool_)) && (e2->Check() == e3->Check()))
       ExprType = e2->Check(); // Expression type matching that of e2 & e3
     else
       throw std::runtime_error(GetTypeError());
@@ -275,9 +271,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Equal_Equal_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
+  Equal_Equal_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
     if(e1->Check() == e2->Check())
-      ExprType = &Bool_; // Expression type of bool
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -297,9 +294,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Not_Equal_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
+  Not_Equal_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
     if(e1->Check() == e2->Check())
-      ExprType = &Bool_; // Expression type of bool
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -319,9 +317,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Less_Than_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Bool_; // Expression type of bool
+  Less_Than_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -341,9 +340,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Greater_Than_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Bool_; // Expression type of bool
+  Greater_Than_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -363,9 +363,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Less_Than_Equal_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Bool_; // Expression type of bool
+  Less_Than_Equal_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -385,9 +386,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Greater_Than_Equal_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Bool_; // Expression type of bool
+  Greater_Than_Equal_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Bool_); // Expression type of bool
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -407,9 +409,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Add_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Int_; // Expression type of int
+  Add_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Int_); // Expression type of int
     else
       throw std::runtime_error(GetTypeError());    
   } // initialize args and confirm they are well-typed
@@ -443,9 +446,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Sub_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Int_; // Expression type of int
+  Sub_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Int_); // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -479,9 +483,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Mult_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Int_;
+  Mult_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Int_);
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -524,9 +529,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Div_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Int_; // Expression type of int
+  Div_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Int_); // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -557,9 +563,10 @@ private:
   Expr * e1, * e2;
 
 public:
-  Rem_Expr(Expr* _e1, Expr* _e2) : e1(_e1), e2(_e2) {
-    if((e1->Check() == &Int_) && (e2->Check() == &Int_))
-      ExprType = &Int_; // Expression type of int
+  Rem_Expr(Expr* _e1, Expr* _e2, Context* _cxt) : e1(_e1), e2(_e2) {
+    cxt = _cxt;
+    if((e1->Check() == &(cxt->Int_)) && (e2->Check() == &(cxt->Int_)))
+      ExprType = &(cxt->Int_); // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
   } // initialize args and confirm they are well-typed
@@ -590,9 +597,10 @@ private:
   Expr * e;
 
 public:
-  Neg_Expr(Expr* _e) : e(_e) {
-    if(e->Check() == &Int_)
-      ExprType = &Int_; // Expression type of int
+  Neg_Expr(Expr* _e, Context* _cxt) : e(_e) {
+    cxt = _cxt;
+    if(e->Check() == &(cxt->Int_))
+      ExprType = &(cxt->Int_); // Expression type of int
     else
       throw std::runtime_error(GetTypeError());
   } // initialize arg and confirm it is well-typed
@@ -610,8 +618,8 @@ public:
   std::string Print() { return "-" + (e->Weight() == 1 ? e->Print() : ("(" + e->Print() + ")")); }
 };
 
-std::string FormatInt(int value) {
-  switch(outputInt) {
+std::string Expr::FormatInt(int value) {
+  switch(cxt->outputFormat) {
   case 'd':
     return std::to_string(value);
   case 'h': {
@@ -638,5 +646,19 @@ std::string FormatInt(int value) {
     throw std::runtime_error("Invalid output type.");
   }
 }
+
+Expr* Expr::Precompute() {
+  Expr* e;
+  
+  if(Check() == &(cxt->Bool_))
+    e = new Bool_Expr(Eval(), cxt);
+  else if(Check() == &(cxt->Int_))
+    e = new Int_Expr(Eval(), cxt);
+  else
+    throw std::runtime_error(GetUndefBehavError());
+  
+  return e;
+}
+
 
 #endif

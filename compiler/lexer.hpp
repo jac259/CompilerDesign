@@ -2,6 +2,7 @@
 #define LEXER_HPP
 
 #include "token.hpp"
+#include "context.hpp"
 #include <iomanip>
 #include <algorithm>
 #include <stdexcept>
@@ -11,29 +12,32 @@ private:
   std::string::iterator first, last; // iterator used to step through the string
   std::string buffer; // buffer while reading multi-digit numbers
   std::string str; // input
-  char outputFormat; // b = binary, h = hex, d = decimal
-
+  //char outputFormat; // b = binary, h = hex, d = decimal
+  Context* cxt;
+  
   const std::string& GetInvalidCharError() {
     static std::string InvalidCharError("Invalid character.");
     return InvalidCharError;
   } // message thrown in invalid character
   
   char LookAhead() const { return *first; } // look at current character
+  char LookAhead(int steps) const { return *(first + steps); }
   void Consume() { ++first; } // step to next character
   char Buffer(); // add lookahead to buffer
   bool isHex(char); // checks if valid hex digit (0-9, a-f)
   bool isBin(char); // checks if valid binary digit (0,1)
   std::string dec2bin(int); // converts int to binary string for output
+  Token * Lex_Id();
   
 public:
   bool Eof() const { return first == last; } // checks if the string is at its end
   Token * Next(); // returns the next token
   std::string Print(Token *); // return the given token for printing
-  Lexer(std::string, char); // constructor, takes input text and output type for numbers
+  Lexer(std::string, Context*); // constructor, takes input text and output type for numbers
 };
 
 // Constructor, stores input, sets iterators and output format for numbers
-Lexer::Lexer(std::string _str, char _outputFormat) : str(_str), outputFormat(_outputFormat) {
+Lexer::Lexer(std::string _str, Context* _cxt) : str(_str), cxt(_cxt) {
   first = str.begin();
   last = str.end();
 }
@@ -56,7 +60,7 @@ std::string Lexer::Print(Token * token) {
   case Int_Tok: { // ints print their value as decimal, hex, or binary
     Int_Token * int_token = dynamic_cast<Int_Token*>(token);
     ss << ": ";
-    switch(outputFormat) {
+    switch(cxt->outputFormat) {
     case 'd':
       ss << int_token->value;
       break;
@@ -102,6 +106,18 @@ std::string Lexer::dec2bin(int n) {
   std::string str = ss.str();
   std::reverse(str.begin(), str.end());
   return str;
+}
+
+Token * Lexer::Lex_Id() {
+  Buffer();
+  while (isalpha(LookAhead()) || isdigit(LookAhead()) || LookAhead() == '_')
+    Buffer();
+
+  const std::string str = buffer;
+  if(Token * kw = cxt->CheckKeyword(str))
+    return kw;
+  else
+    return new Id_Token(str);
 }
 
 // reads along the string and returns the next token
@@ -181,10 +197,6 @@ Token * Lexer::Next() {
       return new Punc_Op_Token(Pipe_Tok); // |
     case '^':
       Consume();
-      // if(LookAhead() == '^') {
-      // 	Consume();
-      // 	return new Punc_Op_Token(CaretCaret_Tok); // ^^
-      // }
       return new Punc_Op_Token(Caret_Tok); // ^
     case '~':
       Consume();
@@ -195,37 +207,9 @@ Token * Lexer::Next() {
     case ':':
       Consume();
       return new Punc_Op_Token(Colon_Tok); // :
-    case 't': {
+    case ';':
       Consume();
-      if(LookAhead() == 'r') {
-	Consume();
-	if(LookAhead() == 'u') {
-	  Consume();
-	  if(LookAhead() == 'e') {
-	    Consume();
-	    return new Bool_Token(true); // true
-	  }
-	}
-      }
-      throw std::runtime_error(GetInvalidCharError());
-    }
-    case 'f': {
-      Consume();
-      if(LookAhead() == 'a') {
-	Consume();
-	if(LookAhead() == 'l') {
-	  Consume();
-	  if(LookAhead() == 's') {
-	    Consume();
-	    if(LookAhead() == 'e') {
-	      Consume();
-	      return new Bool_Token(false); // false
-	    }
-	  }
-	}
-      }
-      throw std::runtime_error(GetInvalidCharError());
-    }
+      return new Punc_Op_Token(Semicolon_Tok); // ;
     case '0':
       Buffer();
       // Checks for hex declaration
@@ -247,20 +231,14 @@ Token * Lexer::Next() {
       //    If no other digit, return 0. Otherwise drop through into standard number loop.
       if(Eof() || !isdigit(LookAhead()))
 	return new Int_Token(0);
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9': {
+    case '1' ... '9':
       Buffer();
       while(!Eof() && std::isdigit(LookAhead()))
 	Buffer();
       return new Int_Token(std::stoi(buffer)); // converts decimal string to int
-    }
+    case '_':
+    case 'a' ... 'z':
+    case 'A' ... 'Z': return Lex_Id();
     default:
       throw std::runtime_error(GetInvalidCharError());
     }

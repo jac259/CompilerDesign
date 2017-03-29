@@ -19,9 +19,9 @@ int main(int argc, char * argv[]) {
     else if((std::string)argv[1] == "-h")
       outputType = 'h';
     else if((std::string)argv[1] != "-d")
-      throw std::runtime_error("Invalid argument.");
+      throw std::runtime_error("Invalid output type argument.");
 
-  outputInt = outputType;
+  Context* cxt = new Context(outputType);
 
   while (std::getline(std::cin, str)) {
     try {
@@ -35,7 +35,7 @@ int main(int argc, char * argv[]) {
 	str.erase(comment); 
 
       
-      Lexer * lexer = new Lexer(str, outputType);
+      Lexer * lexer = new Lexer(str, cxt);
       std::vector<Token*> * tokens = new std::vector<Token*>();
       
       // lex tokens
@@ -43,7 +43,7 @@ int main(int argc, char * argv[]) {
 	tokens->push_back(lexer->Next());
 
       // parse tokens
-      Parser * parser = new Parser(*tokens);
+      Parser * parser = new Parser(*tokens, cxt);
       parser->Print();
     }
     catch (std::runtime_error ex) {
